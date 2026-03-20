@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>t-Distribution Table — Statistics Calculator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #534AB7; --prilight: #EEEDFE;
+  --teal: #1D9E75; --red: #E24B4A;
+  --bg: #f5f4f0; --card: #ffffff; --border: #e2e0d8;
+  --text: #2c2c2a; --text2: #73726c; --radius: 10px;
+}
+body { font-family: system-ui,-apple-system,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.header { background:#16213e; color:#fff; padding:14px 24px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.header a { color:rgba(255,255,255,0.6); text-decoration:none; font-size:13px; }
+.header a:hover { color:#fff; }
+.header h1 { font-size:17px; font-weight:600; }
+.sep { color:rgba(255,255,255,0.3); }
+.page { max-width:1000px; margin:0 auto; padding:24px 16px; }
+.controls { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; }
+.ctrl-group { display:flex; flex-direction:column; gap:4px; }
+.ctrl-group label { font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.04em; }
+.ctrl-group input, .ctrl-group select { height:38px; border:1px solid var(--border); border-radius:8px; padding:0 12px; font-size:14px; background:#fafaf8; color:var(--text); }
+.ctrl-group input { width:120px; font-family:'Courier New',monospace; }
+.ctrl-group select { width:160px; }
+.ctrl-group input:focus, .ctrl-group select:focus { outline:none; border-color:var(--primary); }
+.btn { height:38px; padding:0 22px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500; }
+.btn:hover { background:#3c34a0; }
+.result-banner { display:none; background:var(--prilight); border:1px solid #CECBF6; border-radius:8px; padding:12px 18px; margin-bottom:18px; font-size:14px; color:#3C3489; line-height:1.8; }
+.result-banner.show { display:block; }
+.info-box { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; font-size:13px; line-height:1.8; color:var(--text2); margin-bottom:20px; }
+.info-box h3 { font-size:14px; font-weight:500; color:var(--text); margin-bottom:8px; }
+.info-box code { background:#f0efea; padding:1px 6px; border-radius:4px; font-family:'Courier New',monospace; font-size:12px; color:var(--primary); }
+.table-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:24px; }
+.table-title { padding:12px 18px; border-bottom:1px solid var(--border); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.table-title span { font-size:12px; color:var(--text2); font-weight:400; }
+.tbl-wrap { overflow-x:auto; }
+table.ttable { border-collapse:collapse; font-size:12px; width:100%; min-width:700px; }
+table.ttable th { background:#16213e; color:#e0dfd8; padding:7px 10px; text-align:center; font-weight:600; font-size:12px; }
+table.ttable th:first-child { background:#0f1729; min-width:60px; }
+table.ttable td { padding:5px 10px; text-align:center; border-bottom:1px solid #f0efea; border-right:1px solid #f0efea; font-family:'Courier New',monospace; font-size:12px; cursor:pointer; transition:background .1s; }
+table.ttable tr:hover td { background:#f5f4ff; }
+table.ttable td:first-child { background:#fafaf8; font-weight:600; color:#16213e; font-family:system-ui,sans-serif; font-size:12px; position:sticky; left:0; border-right:2px solid var(--border); }
+table.ttable td.highlight { background:var(--primary)!important; color:#fff!important; font-weight:700; }
+table.ttable td.row-hl { background:#f0f0ff; }
+table.ttable tr.inf-row td { background:#fafaf8; color:var(--text2); font-style:italic; }
+</style>
+</head>
+<body>
+<div class="header">
+  <a href="index.html">← Back to App</a>
+  <span class="sep">|</span>
+  <h1>📊 t-Distribution Critical Values Table</h1>
+</div>
+
+<div class="page">
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Degrees of freedom (df)</label>
+      <input type="number" id="df-input" min="1" max="200" placeholder="e.g. 10" value=""/>
+    </div>
+    <div class="ctrl-group">
+      <label>Tail type</label>
+      <select id="tail-select">
+        <option value="two">Two-tailed</option>
+        <option value="one">One-tailed</option>
+      </select>
+    </div>
+    <button class="btn" onclick="highlightDF()">Highlight row ▶</button>
+    <div style="font-size:12px;color:var(--text2);align-self:center;max-width:260px;line-height:1.6;">
+      Enter df to highlight that row. Click any cell to see its critical value.
+    </div>
+  </div>
+
+  <div class="result-banner" id="result-banner"></div>
+
+  <div class="info-box">
+    <h3>How to use this table</h3>
+    This table shows <strong>critical t values</strong> for common significance levels (α).<br>
+    Example: df = <code>10</code>, two-tailed α = <code>0.05</code> → critical t = <code>2.228</code><br>
+    If your calculated |t| exceeds the critical value, you reject H₀ at that significance level.<br>
+    <strong>One-tailed α</strong> = half the two-tailed α (e.g. one-tailed α = 0.025 same as two-tailed α = 0.05).
+  </div>
+
+  <div class="table-card">
+    <div class="table-title">
+      Critical t values by degrees of freedom and α
+      <span>Click any cell to see the value</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="ttable" id="ttable"></table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// t-distribution inverse CDF (percent-point function) approximation
+// Uses the algorithm from Abramowitz & Stegun
+function tCritical(p, df) {
+  // p = two-tailed alpha, returns critical t value
+  // Using iterative approach based on incomplete beta function
+  const alpha = p / 2; // one-tailed
+  if (df >= 1000) {
+    // Normal approximation for large df
+    return zCritical(alpha);
+  }
+  // Cornish-Fisher expansion for t-distribution
+  const x = zCritical(alpha);
+  const g1 = (x * x * x + x) / 4;
+  const g2 = (5 * Math.pow(x, 5) + 16 * Math.pow(x, 3) + 3 * x) / 96;
+  const g3 = (3 * Math.pow(x, 7) + 19 * Math.pow(x, 5) + 17 * Math.pow(x, 3) - 15 * x) / 384;
+  const g4 = (79 * Math.pow(x, 9) + 776 * Math.pow(x, 7) + 1482 * Math.pow(x, 5) - 1920 * Math.pow(x, 3) - 945 * x) / 92160;
+  return x + g1 / df + g2 / (df * df) + g3 / (df * df * df) + g4 / (df * df * df * df);
+}
+
+function zCritical(alpha) {
+  // Inverse normal CDF using rational approximation (Beasley-Springer-Moro)
+  const p = alpha;
+  const a = [2.50662823884, -18.61500062529, 41.39119773534, -25.44106049637];
+  const b = [-8.47351093090, 23.08336743743, -21.06224101826, 3.13082909833];
+  const c = [0.3374754822726147, 0.9761690190917186, 0.1607979714918209,
+             0.0276438810333863, 0.0038405729373609, 0.0003951896511349,
+             0.0000321767881768, 0.0000002888167364, 0.0000003960315187];
+  let r, x;
+  if (p > 0.08 && p < 0.92) {
+    r = p - 0.5;
+    const r2 = r * r;
+    x = r * (((a[3] * r2 + a[2]) * r2 + a[1]) * r2 + a[0]) /
+          ((((b[3] * r2 + b[2]) * r2 + b[1]) * r2 + b[0]) * r2 + 1);
+  } else {
+    r = p < 0.5 ? Math.sqrt(-Math.log(p)) : Math.sqrt(-Math.log(1 - p));
+    x = c[0] + r * (c[1] + r * (c[2] + r * (c[3] + r * (c[4] + r * (c[5] + r * (c[6] + r * (c[7] + r * c[8])))))));
+    if (p < 0.5) x = -x;
+  }
+  return -x;
+}
+
+// Alpha levels (two-tailed)
+const ALPHAS_TWO = [0.50, 0.40, 0.25, 0.20, 0.10, 0.05, 0.025, 0.02, 0.01, 0.005, 0.001];
+const ALPHAS_ONE = ALPHAS_TWO.map(a => a / 2);
+
+// df values
+const DFS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+             21,22,23,24,25,26,27,28,29,30,35,40,45,50,60,70,80,90,100,120,150,200,500,1000];
+
+// Build table
+const table = document.getElementById('ttable');
+
+// Header
+const thead = document.createElement('thead');
+const hrow1 = document.createElement('tr');
+const hrow2 = document.createElement('tr');
+
+const thDF = document.createElement('th');
+thDF.textContent = 'df';
+thDF.rowSpan = 2;
+thDF.style.verticalAlign = 'middle';
+hrow1.appendChild(thDF);
+
+const thTwo = document.createElement('th');
+thTwo.textContent = 'Two-tailed α';
+thTwo.colSpan = ALPHAS_TWO.length;
+thTwo.style.borderBottom = '1px solid rgba(255,255,255,0.2)';
+hrow1.appendChild(thTwo);
+
+ALPHAS_TWO.forEach(a => {
+  const th = document.createElement('th');
+  th.textContent = a.toFixed(3).replace(/\.?0+$/, '') || a.toString();
+  hrow2.appendChild(th);
+});
+
+thead.appendChild(hrow1);
+thead.appendChild(hrow2);
+table.appendChild(thead);
+
+// Body
+const tbody = document.createElement('tbody');
+DFS.forEach(df => {
+  const tr = document.createElement('tr');
+  tr.dataset.df = df;
+
+  const tdLabel = document.createElement('td');
+  tdLabel.textContent = df >= 1000 ? '∞' : df;
+  tr.appendChild(tdLabel);
+
+  ALPHAS_TWO.forEach((alpha, ai) => {
+    const t   = tCritical(alpha, df);
+    const td  = document.createElement('td');
+    td.textContent  = t.toFixed(3);
+    td.dataset.t    = t.toFixed(3);
+    td.dataset.df   = df;
+    td.dataset.alpha = alpha;
+    td.title = `df=${df}, α=${alpha} (two-tailed) → t = ${t.toFixed(3)}`;
+    td.addEventListener('click', () => showCell(df, alpha, t));
+    tr.appendChild(td);
+  });
+
+  tbody.appendChild(tr);
+});
+table.appendChild(tbody);
+
+function showCell(df, alpha, t) {
+  const banner = document.getElementById('result-banner');
+  banner.classList.add('show');
+  banner.innerHTML = `
+    df = <strong>${df}</strong>, two-tailed α = <strong>${alpha}</strong>
+    → critical t = <strong>${t.toFixed(3)}</strong><br>
+    One-tailed α = <strong>${(alpha/2).toFixed(4)}</strong>. 
+    Reject H₀ if |t_calculated| ≥ <strong>${t.toFixed(3)}</strong>.`;
+  clearHighlights();
+  document.querySelectorAll(`#ttable tbody tr[data-df="${df}"] td`).forEach(td => {
+    td.classList.add('row-hl');
+  });
+  document.querySelectorAll(`#ttable tbody td[data-df="${df}"][data-alpha="${alpha}"]`).forEach(td => {
+    td.classList.remove('row-hl');
+    td.classList.add('highlight');
+  });
+}
+
+function clearHighlights() {
+  document.querySelectorAll('#ttable .highlight, #ttable .row-hl').forEach(el => {
+    el.classList.remove('highlight','row-hl');
+  });
+}
+
+function highlightDF() {
+  const df = parseInt(document.getElementById('df-input').value);
+  if (!df || df < 1) return;
+  clearHighlights();
+  // Find closest df
+  const match = DFS.reduce((a,b) => Math.abs(b-df)<Math.abs(a-df)?b:a);
+  document.querySelectorAll(`#ttable tbody tr[data-df="${match}"] td`).forEach(td => {
+    td.classList.add('row-hl');
+  });
+  const row = document.querySelector(`#ttable tbody tr[data-df="${match}"]`);
+  if (row) row.scrollIntoView({ behavior:'smooth', block:'center' });
+  const banner = document.getElementById('result-banner');
+  banner.classList.add('show');
+  banner.innerHTML = `Showing critical values for df = <strong>${match}</strong>${match !== df ? ` (closest to your input of ${df})` : ''}.
+    Read across the row for different α levels.`;
+}
+
+document.getElementById('df-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') highlightDF();
+});
+</script>
+
+<div style="background:#16213e;border-top:1px solid rgba(201,168,76,0.2);padding:12px 24px;text-align:center;">
+  <div style="font-size:10px;color:#c9a84c;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Developed By</div>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Harshitha A</span>
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Kayal Vili R K</span>
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Divya Darshini S</span>
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Khiruthika Sundari S</span>
+  </div>
+</div>
+</body>
+</html>

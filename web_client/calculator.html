@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Statistics Calculator</title>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+body { display: flex; flex-direction: column; min-height: 100vh; }
+.app-layout { flex: 1; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <a href="index.html" class="logo-link">
+      <div class="logo">StatIQ</div>
+    </a>
+    <nav id="nav">
+      <button class="nav-item active"  data-tab="frequency">    📋 Frequency Dist.</button>
+      <button class="nav-item"         data-tab="averages">     📐 Averages</button>
+      <button class="nav-item"         data-tab="variability">  📏 Variability &amp; IQR</button>
+      <button class="nav-item"         data-tab="outliers">     🔍 Outliers</button>
+      <button class="nav-item"         data-tab="normal">       🔔 Normal Dist.</button>
+      <button class="nav-item"         data-tab="zscores">      📈 Z-Scores</button>
+      <button class="nav-item"         data-tab="correlation">  🔗 Correlation</button>
+      <button class="nav-item"         data-tab="regression">   📉 Regression</button>
+      <button class="nav-item"         data-tab="multiregression">🧮 Multiple Reg.</button>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <a href="ztable.html" class="nav-item nav-link">📋 Z-Score Table</a>
+    <a href="ttable.html" class="nav-item nav-link">📋 t-Distribution Table</a>
+    <div class="sidebar-divider"></div>
+    <a href="index.html" class="nav-item nav-link" style="color:rgba(201,168,76,0.8)">🏠 Home</a>
+    <div class="sidebar-footer">
+      Node.js backend<br>
+      <span id="api-status">⏳ Connecting…</span>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══════════════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- shared data input panel -->
+    <div class="data-panel" id="input-panel">
+
+      <!-- single-series input (most tabs) -->
+      <div id="panel-single">
+        <div class="input-row">
+          <div class="input-group" style="flex:1">
+            <label>Data values <span class="hint">(comma or space separated)</span></label>
+            <textarea id="data-input" rows="2"
+              placeholder="e.g.  12, 15, 18, 10, 22, 9, 14, 100, 13">12, 15, 18, 10, 22, 9, 14, 100, 13, 17, 20, 11</textarea>
+          </div>
+          <div class="input-group presets-group">
+            <label>Quick presets</label>
+            <div class="presets">
+              <button onclick="loadPreset('exam')">Exam scores</button>
+              <button onclick="loadPreset('salary')">Salaries</button>
+              <button onclick="loadPreset('heights')">Heights</button>
+              <button onclick="loadPreset('skewed')">Skewed</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- X / Y input (correlation + regression) -->
+      <div id="panel-xy" style="display:none">
+        <div class="input-row">
+          <div class="input-group" style="flex:1">
+            <label>X values</label>
+            <textarea id="x-input" rows="2"
+              placeholder="e.g. 1, 2, 3, 4, 5">1, 2, 3, 4, 5, 6, 7, 8</textarea>
+          </div>
+          <div class="input-group" style="flex:1">
+            <label>Y values</label>
+            <textarea id="y-input" rows="2"
+              placeholder="e.g. 2, 4, 5, 7, 8">2, 4, 5, 7, 8, 9, 10, 12</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multiple regression input -->
+      <div id="panel-multi" style="display:none">
+        <div class="input-row">
+          <div class="input-group" style="flex:1">
+            <label>Y — outcome values</label>
+            <textarea id="my-input" rows="2"
+              placeholder="outcome">10, 20, 30, 40, 50, 60, 70</textarea>
+          </div>
+        </div>
+        <div id="predictors-wrap">
+          <div class="input-row predictor-row">
+            <div class="input-group" style="flex:1">
+              <label>X1 — predictor 1</label>
+              <textarea class="pred-input" rows="2">1, 2, 3, 4, 5, 6, 7</textarea>
+            </div>
+            <div class="input-group" style="flex:1">
+              <label>X2 — predictor 2</label>
+              <textarea class="pred-input" rows="2">2, 4, 5, 7, 8, 9, 10</textarea>
+            </div>
+          </div>
+        </div>
+        <button class="btn-sm" onclick="addPredictor()">+ Add predictor</button>
+      </div>
+
+      <!-- Normal distribution inputs -->
+      <div id="panel-normal" style="display:none">
+        <div class="input-row">
+          <div class="input-group"><label>Value (X)</label><input type="number" id="n-val" value="75"/></div>
+          <div class="input-group"><label>Population mean (μ)</label><input type="number" id="n-mean" value="70"/></div>
+          <div class="input-group"><label>Std deviation (σ)</label><input type="number" id="n-sd" value="10"/></div>
+        </div>
+      </div>
+
+      <button class="btn-calc" id="calc-btn" onclick="calculate()">Calculate ▶</button>
+    </div>
+
+    <!-- results area -->
+    <div id="results" class="results-area">
+      <div class="welcome">
+        <div class="welcome-icon">📊</div>
+        <h2>Statistics Calculator</h2>
+        <p>Enter your data above and click <strong>Calculate</strong></p>
+        <p class="sub">All 9 modules · Powered by Node.js backend</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+
+<div class="dev-band">
+  <div class="dev-label">Developed By</div>
+  <div class="dev-names">
+    <span class="dev-name">Harshitha A</span>
+    <span class="dev-name">Kayal Vili R K</span>
+    <span class="dev-name">Divya Darshini S</span>
+    <span class="dev-name">Khiruthika Sundari S</span>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

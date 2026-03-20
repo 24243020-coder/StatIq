@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Z-Score Table — Statistics Calculator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #534AB7;
+  --prilight: #EEEDFE;
+  --teal: #1D9E75;
+  --teallight: #edfaf4;
+  --red: #E24B4A;
+  --amber: #BA7517;
+  --bg: #f5f4f0;
+  --card: #ffffff;
+  --border: #e2e0d8;
+  --text: #2c2c2a;
+  --text2: #73726c;
+  --radius: 10px;
+}
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── header ─────────────────────────────────────── */
+.header {
+  background: #16213e;
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header a {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 13px;
+}
+.header a:hover { color: #fff; }
+.header h1 { font-size: 17px; font-weight: 600; color: #fff; }
+.header .sep { color: rgba(255,255,255,0.3); }
+
+/* ── layout ─────────────────────────────────────── */
+.page { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+/* ── controls ───────────────────────────────────── */
+.controls {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+.ctrl-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.ctrl-group input[type=number] {
+  width: 110px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  background: #fafaf8;
+  color: var(--text);
+}
+.ctrl-group input:focus { outline: none; border-color: var(--primary); }
+.btn-lookup {
+  height: 38px;
+  padding: 0 22px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .13s;
+}
+.btn-lookup:hover { background: #3c34a0; }
+
+/* ── result banner ──────────────────────────────── */
+.result-banner {
+  display: none;
+  background: var(--prilight);
+  border: 1px solid #CECBF6;
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: #3C3489;
+  line-height: 1.8;
+}
+.result-banner.show { display: block; }
+.result-banner strong { font-weight: 600; }
+
+/* ── metrics ────────────────────────────────────── */
+.metrics {
+  display: none;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.metrics.show { display: flex; }
+.metric {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  min-width: 150px;
+}
+.metric .m-lbl { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+.metric .m-val { font-size: 20px; font-weight: 500; }
+
+/* ── table card ─────────────────────────────────── */
+.table-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.table-title {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.table-title span { font-size: 12px; color: var(--text2); font-weight: 400; }
+.tbl-wrap { overflow-x: auto; }
+
+/* ── Z table ────────────────────────────────────── */
+table.ztable {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: 100%;
+  min-width: 600px;
+}
+table.ztable th {
+  background: #16213e;
+  color: #e0dfd8;
+  padding: 7px 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+table.ztable th:first-child {
+  background: #0f1729;
+  min-width: 46px;
+}
+table.ztable td {
+  padding: 5px 8px;
+  text-align: center;
+  border-bottom: 1px solid #f0efea;
+  border-right: 1px solid #f0efea;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  transition: background .1s;
+  cursor: pointer;
+}
+table.ztable tr:hover td { background: #f5f4ff; }
+table.ztable td:first-child {
+  background: #fafaf8;
+  font-weight: 600;
+  color: #16213e;
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  position: sticky;
+  left: 0;
+  border-right: 2px solid var(--border);
+}
+table.ztable td.highlight {
+  background: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-radius: 3px;
+}
+table.ztable td.row-hl { background: #f0f0ff; }
+table.ztable td.col-hl { background: #f0f0ff; }
+table.ztable td.first-hl {
+  background: #e8e7ff !important;
+  color: #16213e;
+}
+
+/* ── info box ───────────────────────────────────── */
+.info-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text2);
+  margin-bottom: 20px;
+}
+.info-box h3 { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.info-box code {
+  background: #f0efea;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--primary);
+}
+
+/* ── diagram ────────────────────────────────────── */
+.diagram-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+@media(max-width:640px) { .diagram-row { grid-template-columns: 1fr; } }
+.diagram-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.diagram-card h4 { font-size: 13px; font-weight: 500; margin-bottom: 10px; }
+canvas.dist-canvas { width: 100%; height: 120px; display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">← Back to App</a>
+  <span class="sep">|</span>
+  <h1>📊 Z-Score Table (Standard Normal Distribution)</h1>
+</div>
+
+<div class="page">
+
+  <!-- LOOKUP TOOL -->
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Enter Z value</label>
+      <input type="number" id="z-input" step="0.01" min="-4" max="4" placeholder="e.g. 1.96" value=""/>
+    </div>
+    <button class="btn-lookup" onclick="lookup()">Look up ▶</button>
+    <div style="font-size:12px;color:var(--text2);align-self:center;max-width:280px;line-height:1.6;">
+      Enter any Z value (e.g. <code style="font-size:11px;background:#f0efea;padding:1px 5px;border-radius:3px">1.96</code>) to highlight it in the table and see the probability values.
+    </div>
+  </div>
+
+  <!-- RESULT BANNER -->
+  <div class="result-banner" id="result-banner"></div>
+
+  <!-- METRICS -->
+  <div class="metrics" id="metrics">
+    <div class="metric"><div class="m-lbl">Z value</div><div class="m-val" id="m-z">—</div></div>
+    <div class="metric"><div class="m-lbl">Area (0 to Z)</div><div class="m-val" id="m-area">—</div></div>
+    <div class="metric"><div class="m-lbl">P(X ≤ Z) — left tail</div><div class="m-val" id="m-left">—</div></div>
+    <div class="metric"><div class="m-lbl">P(X > Z) — right tail</div><div class="m-val" id="m-right">—</div></div>
+    <div class="metric"><div class="m-lbl">Percentile</div><div class="m-val" id="m-pct">—</div></div>
+  </div>
+
+  <!-- HOW TO READ -->
+  <div class="info-box">
+    <h3>How to read this table</h3>
+    This table gives the <strong>area between the mean (Z = 0) and a positive Z value</strong> — i.e. P(0 ≤ X ≤ Z).<br>
+    To find the area for Z = <code>1.96</code>: find row <code>1.9</code> → column <code>0.06</code> → value = <code>0.47500</code><br>
+    To get the <strong>left-tail probability</strong> P(X ≤ Z): add 0.5 to the table value (since the left half = 0.5).<br>
+    For <strong>negative Z</strong>: the table is symmetric — P(0 to −Z) = P(0 to Z). Left tail of −Z = 0.5 − table value.
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-title">
+      Z-table — area from mean (0) to Z
+      <span>Click any cell to look up that value</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="ztable" id="ztable"></table>
+    </div>
+  </div>
+
+  <!-- COMMON VALUES -->
+  <div class="table-card">
+    <div class="table-title">Common critical Z values</div>
+    <div class="tbl-wrap">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#fafaf8;">
+            <th style="padding:9px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;">Z value</th>
+            <th style="padding:9px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;">Area (0 to Z)</th>
+            <th style="padding:9px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;">P(X ≤ Z)</th>
+            <th style="padding:9px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;">Confidence level</th>
+            <th style="padding:9px 14px;text-align:left;border-bottom:2px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;">Common use</th>
+          </tr>
+        </thead>
+        <tbody id="common-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Generate Z table data ────────────────────────────────────
+function normalCDF(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.7814779 + t * (-1.8212560 + t * 1.3302744))));
+  return z > 0 ? 1 - p : p;
+}
+
+// Area from 0 to z (the value in the standard Z table)
+function areaFromMean(z) {
+  return normalCDF(z) - 0.5;
+}
+
+function fmt5(v) { return Math.abs(v) < 0.00001 ? '0' : v.toFixed(5); }
+
+// Z rows: 0.0 to 4.0 in steps of 0.1
+const rows = [];
+for (let r = 0; r <= 40; r++) rows.push(+(r / 10).toFixed(1));
+
+// Z cols: 0.00 to 0.09
+const cols = [0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09];
+
+// Build the table
+const table = document.getElementById('ztable');
+
+// Header row
+const thead = document.createElement('thead');
+const hrow  = document.createElement('tr');
+const thZ   = document.createElement('th');
+thZ.textContent = 'z';
+hrow.appendChild(thZ);
+cols.forEach(c => {
+  const th = document.createElement('th');
+  th.textContent = c.toFixed(2);
+  hrow.appendChild(th);
+});
+thead.appendChild(hrow);
+table.appendChild(thead);
+
+// Body
+const tbody = document.createElement('tbody');
+rows.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.dataset.row = r;
+
+  const tdLabel = document.createElement('td');
+  tdLabel.textContent = r.toFixed(1);
+  tr.appendChild(tdLabel);
+
+  cols.forEach(c => {
+    const zVal = +(r + c).toFixed(2);
+    const area = areaFromMean(zVal);
+    const td   = document.createElement('td');
+    td.textContent    = fmt5(area);
+    td.dataset.z      = zVal;
+    td.dataset.col    = c.toFixed(2);
+    td.title          = `Z = ${zVal.toFixed(2)}  →  area = ${fmt5(area)}`;
+    td.addEventListener('click', () => {
+      document.getElementById('z-input').value = zVal.toFixed(2);
+      lookup();
+    });
+    tr.appendChild(td);
+  });
+
+  tbody.appendChild(tr);
+});
+table.appendChild(tbody);
+
+// ── Common critical values ───────────────────────────────────
+const COMMON = [
+  { z: 1.28, conf: '80%',  use: 'One-tailed 90% CI' },
+  { z: 1.645,conf: '90%',  use: 'One-tailed 95% CI' },
+  { z: 1.96, conf: '95%',  use: 'Two-tailed 95% CI (most common)' },
+  { z: 2.054,conf: '96%',  use: 'Two-tailed 96% CI' },
+  { z: 2.326,conf: '98%',  use: 'Two-tailed 98% CI' },
+  { z: 2.576,conf: '99%',  use: 'Two-tailed 99% CI' },
+  { z: 3.0,  conf: '99.7%',use: '3-sigma rule (empirical rule)' },
+  { z: 3.291,conf: '99.9%',use: 'Two-tailed 99.9% CI' },
+];
+
+const ctbody = document.getElementById('common-tbody');
+COMMON.forEach(cv => {
+  const area  = areaFromMean(cv.z);
+  const left  = normalCDF(cv.z);
+  const tr    = document.createElement('tr');
+  tr.style.cursor = 'pointer';
+  tr.style.borderBottom = '1px solid var(--border)';
+  tr.innerHTML = `
+    <td style="padding:8px 14px;font-family:monospace;font-weight:600;color:var(--primary)">${cv.z.toFixed(3)}</td>
+    <td style="padding:8px 14px;font-family:monospace">${fmt5(area)}</td>
+    <td style="padding:8px 14px;font-family:monospace">${left.toFixed(5)}</td>
+    <td style="padding:8px 14px"><span style="background:var(--prilight);color:#3C3489;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500">${cv.conf}</span></td>
+    <td style="padding:8px 14px;font-size:12px;color:var(--text2)">${cv.use}</td>`;
+  tr.addEventListener('click', () => {
+    document.getElementById('z-input').value = cv.z.toFixed(3);
+    lookup();
+  });
+  ctbody.appendChild(tr);
+});
+
+// ── Lookup function ──────────────────────────────────────────
+let lastHighlightedCells = [];
+
+function lookup() {
+  const raw = document.getElementById('z-input').value.trim();
+  if (raw === '') return;
+  const z = parseFloat(raw);
+  if (isNaN(z)) return;
+
+  const absZ    = Math.abs(z);
+  const area    = areaFromMean(absZ);
+  const leftP   = normalCDF(z);
+  const rightP  = 1 - leftP;
+  const pct     = leftP * 100;
+
+  // Find matching row and col
+  const rowVal  = Math.floor(absZ * 10) / 10;
+  const colVal  = +(absZ - rowVal).toFixed(2);
+  // clamp
+  const rowKey  = Math.min(rowVal, 4.0).toFixed(1);
+  const colKey  = Math.min(colVal, 0.09).toFixed(2);
+
+  // Clear previous highlights
+  lastHighlightedCells.forEach(el => {
+    el.classList.remove('highlight', 'row-hl', 'col-hl', 'first-hl');
+  });
+  lastHighlightedCells = [];
+
+  // Highlight matching row
+  document.querySelectorAll('#ztable tbody tr').forEach(tr => {
+    if (tr.dataset.row === rowKey) {
+      tr.querySelectorAll('td').forEach((td, i) => {
+        if (i === 0) {
+          td.classList.add('first-hl');
+        } else {
+          td.classList.add('row-hl');
+        }
+        lastHighlightedCells.push(td);
+      });
+    }
+  });
+
+  // Highlight matching col header
+  const colIndex = cols.findIndex(c => c.toFixed(2) === colKey);
+  if (colIndex >= 0) {
+    document.querySelectorAll('#ztable thead th').forEach((th, i) => {
+      if (i === colIndex + 1) {
+        th.style.background = '#7F77DD';
+        lastHighlightedCells.push(th);
+      }
+    });
+  }
+
+  // Highlight the exact cell
+  document.querySelectorAll('#ztable tbody td').forEach(td => {
+    if (td.dataset.z === absZ.toFixed(2) ||
+        (Math.abs(parseFloat(td.dataset.z) - absZ) < 0.005)) {
+      td.classList.remove('row-hl');
+      td.classList.add('highlight');
+      lastHighlightedCells.push(td);
+      td.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  // Show result banner
+  const banner = document.getElementById('result-banner');
+  banner.classList.add('show');
+  banner.innerHTML = `
+    Z = <strong>${z >= 0 ? '+' : ''}${z.toFixed(2)}</strong>
+    &nbsp;→&nbsp; Area from mean = <strong>${fmt5(area)}</strong>
+    &nbsp;|&nbsp; P(X ≤ Z) = <strong>${leftP.toFixed(5)}</strong>
+    &nbsp;|&nbsp; P(X > Z) = <strong>${rightP.toFixed(5)}</strong>
+    &nbsp;|&nbsp; Percentile = <strong>${pct.toFixed(2)}th</strong>
+    ${z < 0 ? '<br><em style="font-size:12px">Negative Z: table is symmetric — area shown is for |Z| = ' + absZ.toFixed(2) + '</em>' : ''}`;
+
+  // Show metrics
+  document.getElementById('metrics').classList.add('show');
+  document.getElementById('m-z').textContent    = z.toFixed(2);
+  document.getElementById('m-area').textContent = fmt5(area);
+  document.getElementById('m-left').textContent = leftP.toFixed(5);
+  document.getElementById('m-right').textContent= rightP.toFixed(5);
+  document.getElementById('m-pct').textContent  = pct.toFixed(2) + 'th';
+}
+
+// Allow Enter key to trigger lookup
+document.getElementById('z-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') lookup();
+});
+
+// Restore col header highlights on re-render
+window._restoreColHL = function(colKey) {
+  const colIndex = cols.findIndex(c => c.toFixed(2) === colKey);
+  document.querySelectorAll('#ztable thead th').forEach((th, i) => {
+    if (i === colIndex + 1) th.style.background = '#7F77DD';
+  });
+};
+</script>
+
+<div style="background:#16213e;border-top:1px solid rgba(201,168,76,0.2);padding:12px 24px;text-align:center;">
+  <div style="font-size:10px;color:#c9a84c;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Developed By</div>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Harshitha A</span>
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Kayal Vili R K</span>
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Divya Darshini S</span>
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:3px 12px;font-size:12px;color:#e8c96d;font-weight:500;">Khiruthika Sundari S</span>
+  </div>
+</div>
+</body>
+</html>
