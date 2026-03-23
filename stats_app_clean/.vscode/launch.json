@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "▶ Start Backend (Node.js)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/server.js",
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "restart": true
+    },
+    {
+      "name": "▶ Flutter (Chrome/Web)",
+      "type": "dart",
+      "request": "launch",
+      "program": "${workspaceFolder}/flutter_app/lib/main.dart",
+      "args": ["-d", "chrome"]
+    },
+    {
+      "name": "▶ Flutter (Desktop)",
+      "type": "dart",
+      "request": "launch",
+      "program": "${workspaceFolder}/flutter_app/lib/main.dart"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Backend + Flutter",
+      "configurations": ["▶ Start Backend (Node.js)", "▶ Flutter (Chrome/Web)"]
+    }
+  ]
+}
